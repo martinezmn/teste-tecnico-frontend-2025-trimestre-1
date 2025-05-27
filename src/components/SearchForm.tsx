@@ -9,7 +9,7 @@ import type { Address } from '../interfaces/Address';
 
 export default function SearchForm() {
   const queryClient = useQueryClient();
-  const [errorMessage, setErrorMessage] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleSubmit = async (
     e: FormEvent<HTMLFormElement>,
@@ -28,12 +28,18 @@ export default function SearchForm() {
   const { mutate: searchAddress } = useMutation({
     mutationFn: handleSubmit,
     onSuccess: (response) => {
-      setErrorMessage('');
       StorageService.addAddress(response);
       queryClient.invalidateQueries({ queryKey: ['addresses'] });
+      setMessage('Endereço adicionado com sucesso!');
+      setTimeout(() => {
+        setMessage('');
+      }, 3000);
     },
     onError: (error) => {
-      setErrorMessage(error.message);
+      setMessage(error.message);
+      setTimeout(() => {
+        setMessage('');
+      }, 3000);
     },
   });
 
@@ -55,11 +61,13 @@ export default function SearchForm() {
           <Input label="Nome de exibição" name="nickname" required />
           <Input label="CEP" name="cep" required />
           <Button label="Buscar" type="submit" />
-          {errorMessage && (
-            <p className="text-sm text-red-700">{errorMessage}</p>
-          )}
         </form>
       </div>
+      {message && (
+        <div className="fixed flex items-center w-full max-w-xs p-4 space-x-4 text-gray-700 bg-gray-300 divide-x rtl:divide-x-reverse rounded-lg shadow-sm top-5 left-5">
+          <div className="text-sm font-normal">{message}</div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,12 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { StorageService } from '../services/StorageService';
 import { useState } from 'react';
+import EditModal from './EditModal';
+import type { Address } from '../interfaces/Address';
 
 export default function AddressList() {
   const [usernameFilter, setUsernameFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [stateFilter, setStateFilter] = useState('');
   const [addressFilter, setAddressFilter] = useState('');
+  const [editAddress, setEditAddress] = useState<Address & { index: number }>();
 
   const { data: addresses, isLoading } = useQuery({
     queryFn: StorageService.getAddressTable,
@@ -100,25 +103,24 @@ export default function AddressList() {
                   <td className="px-6 py-4">{address.address.localidade}</td>
                   <td className="px-6 py-4">{address.address.estado}</td>
                   <td className="px-6 py-4">
-                    <a
-                      href="#"
+                    <button
                       className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                      onClick={() => setEditAddress({ ...address, index })}
                     >
                       Editar
-                    </a>
-                    {', '}
-                    <a
-                      href="#"
-                      className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-                    >
-                      Excluir
-                    </a>
+                    </button>
                   </td>
                 </tr>
               );
             })}
         </tbody>
       </table>
+      {editAddress && (
+        <EditModal
+          onClose={() => setEditAddress(undefined)}
+          address={editAddress}
+        />
+      )}
     </div>
   );
 }
