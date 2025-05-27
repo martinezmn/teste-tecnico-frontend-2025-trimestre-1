@@ -1,43 +1,36 @@
 import Input from './Input';
 import viacepLogo from '../assets/viacep.png';
 import Button from './Button';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ViaCEPService } from '../services/ViaCEPService';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
+import { StorageService } from '../services/StorageService';
+import type { Address } from '../interfaces/Address';
 
 export default function SearchForm() {
   const queryClient = useQueryClient();
   const [errorMessage, setErrorMessage] = useState('');
 
-  const getAddresses = () => {
-    const addresses = localStorage.getItem('addresses');
-    if (addresses) {
-      return JSON.parse(addresses);
-    }
-    return [];
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    e: FormEvent<HTMLFormElement>,
+  ): Promise<Address> => {
     e.preventDefault();
-    const form = new FormData(e.target as HTMLFormElement);
-    return ViaCEPService.getAddress(form.get('cep') as string);
+    const target = e.target as HTMLFormElement;
+    const form = new FormData(target);
+    target.reset();
+    return {
+      username: form.get('username') as string,
+      label: form.get('nickname') as string,
+      address: await ViaCEPService.getAddress(form.get('cep') as string),
+    };
   };
-
-  const { data: addresses } = useQuery({
-    queryFn: getAddresses,
-    queryKey: ['addresses'],
-  });
 
   const { mutate: searchAddress } = useMutation({
     mutationFn: handleSubmit,
     onSuccess: (response) => {
-      console.log('Address found:', response);
-      localStorage.setItem(
-        'addresses',
-        JSON.stringify([...addresses, response]),
-      );
-      queryClient.invalidateQueries({ queryKey: ['addresses'] });
       setErrorMessage('');
+      StorageService.addAddress(response);
+      queryClient.invalidateQueries({ queryKey: ['addresses'] });
     },
     onError: (error) => {
       setErrorMessage(error.message);
@@ -45,7 +38,7 @@ export default function SearchForm() {
   });
 
   return (
-    <div className="flex min-h-full flex-1 flex-col justify-center ">
+    <div className="flex min-h-full flex-1 flex-col justify-center">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <img
           alt="ViaCEP Logo"
