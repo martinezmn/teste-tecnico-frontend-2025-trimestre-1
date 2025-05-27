@@ -12,7 +12,31 @@ export class StorageService {
   }
 
   static addAddress(address: Address): void {
-    const addresses = this.listAddress();
+    const addresses = StorageService.listAddress();
     localStorage.setItem(ADDRESS_KEY, JSON.stringify([address, ...addresses]));
+  }
+
+  static getAddressTable() {
+    const addresses = StorageService.listAddress();
+    const cities = new Set<string>();
+    const states = new Set<string>();
+    const users = new Set<string>();
+    addresses.forEach(({ username, address }) => {
+      if (address.localidade) {
+        cities.add(address.localidade);
+      }
+      if (address.estado) {
+        states.add(address.estado);
+      }
+      if (username) {
+        users.add(username);
+      }
+    });
+    return {
+      addresses,
+      cities: Array.from(cities),
+      states: Array.from(states),
+      users: Array.from(users),
+    };
   }
 }
